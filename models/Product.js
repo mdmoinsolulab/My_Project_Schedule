@@ -1,4 +1,3 @@
-//const Product = require("../models/Product");
 const mongoose = require("mongoose");
 
 const ProductSchema = new mongoose.Schema(
@@ -10,7 +9,10 @@ const ProductSchema = new mongoose.Schema(
     size: { type: String },
     color: { type: String },
     price: { type: Number, required: true },
-    
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );

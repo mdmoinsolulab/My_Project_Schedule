@@ -2,10 +2,7 @@ const mongoose = require("mongoose");
 
 const DiscountSchema = new mongoose.Schema(
   {
-        productId: {
-          type: String,
-          required: true,
-        },
+        productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
         discounts: { type: Array } 
   },
   { timestamps: true }

@@ -39,7 +39,15 @@ router.put("/:id", verifyTokenAndAdmin, async (req, res) => {
 //DELETE
 router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          isDeleted: true
+        },
+      },
+      { new: true }
+    )
     res.status(200).json("Product has been deleted...");
   } catch (err) {
     res.status(500).json(err);
@@ -49,8 +57,13 @@ router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
 //GET PRODUCT
 router.get("/find/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findOne({_id : {$eq: req.params.id}, isDeleted: {$eq: false}});
+    if (product.isDeleted === true) {
+      res.json("Product Has Been Deleted");
+    }
+    else {
     res.status(200).json(product);
+    }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -64,9 +77,10 @@ router.get("/", async (req, res) => {
     let products;
 
     if (qNew) {
-      products = await Product.find().sort({ createdAt: -1 }).limit(1);
+      products = await Product.find({ isDeleted: {$eq: false}}).sort({ createdAt: -1 }).limit(1);
     } else if (qCategory) {
       products = await Product.find({
+        isDeleted: {$eq: false},
         categories: {
           $in: [qCategory],
         },
