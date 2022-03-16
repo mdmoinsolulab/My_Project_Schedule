@@ -2,16 +2,21 @@ const router = require("express").Router();
 const User = require("../models/User");
 const CryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
+const { Validate } = require('../helpers/validation');
+const {Enum} = require('../helpers/enumtypes');
 
 //REGISTER
-router.post("/register", async (req, res) => {
+router.post("/register", Validate(Enum.REGISTERATION), async (req, res) => {
+  const { username, email, password, vendor } = req.body;
+  console.log("Why is it working")
   const newUser = new User({
-    username: req.body.username,
-    email: req.body.email,
+    username: username,
+    email: email,
     password: CryptoJS.AES.encrypt(
-      req.body.password,
+      password,
       process.env.PASS_SEC
     ).toString(),
+    isVendor: vendor,
   });
 
   try {
@@ -24,11 +29,12 @@ router.post("/register", async (req, res) => {
 
 //LOGIN
 
-router.post('/login', async (req, res) => {
+router.post('/login', Validate(Enum.LOGIN), async (req, res) => {
     try{
+      const {username, password} = req.body;
         const user = await User.findOne(
             {
-                username: req.body.username
+                username: username
             }
         );
 
@@ -44,21 +50,24 @@ router.post('/login', async (req, res) => {
 
         const originalPassword = hashedPassword.toString(CryptoJS.enc.Utf8);
 
-        const inputPassword = req.body.password;
+        const inputPassword = password;
         
         originalPassword != inputPassword && 
             res.status(401).json("Wrong Password");
+
+        console.log("This is the User Fetched from database : ",user)
         
         const accessToken = jwt.sign(
         {
             id: user._id,
             isAdmin: user.isAdmin,
+            isVendor: user.isVendor,
         },
         process.env.JWT_SEC,
             {expiresIn:"3d"}
         );
   
-        const { password, ...others } = user._doc;  
+        const { removepassword, ...others } = user._doc;  
         res.status(200).json({...others, accessToken});
 
     }catch(err){

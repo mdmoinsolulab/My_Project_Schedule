@@ -1,15 +1,14 @@
 const Product = require("../models/Product");
 const {
-  verifyToken,
-  verifyTokenAndAuthorization,
-  verifyTokenAndAdmin,
+  verifyTokenAndVendor,
 } = require("./verifyToken");
-
 const router = require("express").Router();
+const {Enum} = require('../helpers/enumtypes');
+const {Validate} = require('../helpers/validation');
 
 //CREATE
 
-router.post("/", verifyTokenAndAdmin, async (req, res) => {
+router.post("/", Validate(Enum.ADDPRODUCT), verifyTokenAndVendor, async (req, res) => {
   const newProduct = new Product(req.body);
 
   try {
@@ -21,7 +20,8 @@ router.post("/", verifyTokenAndAdmin, async (req, res) => {
 });
 
 //UPDATE
-router.put("/:id", verifyTokenAndAdmin, async (req, res) => {
+router.put("/:id", Validate(Enum.UPDATEPRODUCT) , verifyTokenAndVendor, async (req, res) => {
+  if (req.params.id){
   try {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -34,10 +34,11 @@ router.put("/:id", verifyTokenAndAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
-});
+}});
 
 //DELETE
-router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
+router.delete("/:id", verifyTokenAndVendor, async (req, res) => {
+  if(req.params.id) {
   try {
     await Product.findByIdAndUpdate(
       req.params.id,
@@ -52,10 +53,11 @@ router.delete("/:id", verifyTokenAndAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
-});
+}});
 
 //GET PRODUCT
 router.get("/find/:id", async (req, res) => {
+  if (req.params.id) {
   try {
     const product = await Product.findOne({_id : {$eq: req.params.id}, isDeleted: {$eq: false}});
     if (product.isDeleted === true) {
@@ -67,7 +69,7 @@ router.get("/find/:id", async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
-});
+}});
 
 //GET ALL PRODUCTS
 router.get("/", async (req, res) => {

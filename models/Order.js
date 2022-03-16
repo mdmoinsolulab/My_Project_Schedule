@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const {Enum} = require('../helpers/enumtypes');
 const OrderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -16,7 +16,7 @@ const OrderSchema = new mongoose.Schema(
     ],
     amount: { type: Number, required: true },
     address: { type: Object, required: true },
-    status: { type: String, default: "pending" },
+    status: { type: String, default: Enum.PENDING },
   },
   { timestamps: true }
 );

@@ -4,21 +4,24 @@ const {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin,
 } = require("./verifyToken");
-
+const { Validate } = require('../helpers/validation');
+const {Enum} = require('../helpers/enumtypes');
 const router = require("express").Router();
+const CryptoJS = require("crypto-js");
 
 //UPDATE
-router.put("/:id", verifyTokenAndAuthorization, async (req, res) => {
-  if (req.body.password) {
-    req.body.password = CryptoJS.AES.encrypt(
-      req.body.password,
+router.put("/:id",Validate(Enum.UPDATEUSER) , verifyTokenAndAuthorization, async (req, res) => {
+  const { password, id } = req.body;
+  if (password) {
+    password = CryptoJS.AES.encrypt(
+      password,
       process.env.PASS_SEC
     ).toString();
   }
 
   try {
     const updatedUser = await User.findOneAndUpdate(
-      {_id : {$eq: req.user.id} , isDeleted : {$eq: false}},
+      {_id : {$eq: id} , isDeleted : {$eq: false}},
       {
         $set: req.body,
       },
@@ -37,6 +40,7 @@ router.put("/:id", verifyTokenAndAuthorization, async (req, res) => {
 
 //DELETE
 router.delete("/delete/:id", verifyTokenAndAuthorization, async (req, res) => {
+  if (req.params.id){
   try {
     await User.findByIdAndUpdate(
       req.params.id,
@@ -51,10 +55,11 @@ router.delete("/delete/:id", verifyTokenAndAuthorization, async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
-});
+}});
 
 //GET USER
 router.get("/find/:id", verifyTokenAndAdmin, async (req, res) => {
+  if (req.params.id){
   try {
     const user = await User.findOne({_id : {$eq: req.params.id}, isDeleted: {$eq: false}});
     if (user.isDeleted === true) {
@@ -67,7 +72,7 @@ router.get("/find/:id", verifyTokenAndAdmin, async (req, res) => {
   } catch (err) {
     res.status(500).json(err);
   }
-});
+}});
 
 //GET ALL USER
 router.get("/", verifyTokenAndAdmin, async (req, res) => {
