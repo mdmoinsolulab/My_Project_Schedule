@@ -1,16 +1,21 @@
-const mongoose = require("mongoose");
-const {Enum} = require('../helpers/enumtypes');
+import mongoose from "mongoose";
+import Enum from "../helpers/enumtypes.js";
 const OrderSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     products: [
       {
         productId: {
-          type: mongoose.Schema.Types.ObjectId, ref: 'Product',
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
         },
         quantity: {
           type: Number,
           default: 1,
+        },
+        productAmount: {
+          type: Number,
+          default: 0,
         },
       },
     ],
@@ -21,4 +26,4 @@ const OrderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Order", OrderSchema);
+export default mongoose.model("Order", OrderSchema);

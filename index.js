@@ -1,15 +1,14 @@
-const express = require("express");
+import express from "express";
 const app = express();
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const userRoute = require("./routes/user");
-const authRoute = require("./routes/auth");
-const productRoute = require("./routes/product");
-const cartRoute = require("./routes/cart");
-const orderRoute = require("./routes/order");
-const stripeRoute = require("./routes/stripe");
-const discountRoute = require("./routes/discount");
-const cors = require("cors");
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import auth from "./routes/auth.js";
+import users from "./routes/user.js";
+import product from "./routes/product.js";
+import cart from "./routes/cart.js";
+import order from "./routes/order.js";
+import stripe from "./routes/stripe.js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -22,13 +21,12 @@ mongoose
 
 app.use(cors());
 app.use(express.json());
-app.use("/api/auth", authRoute);
-app.use("/api/users", userRoute);
-app.use("/api/products", productRoute);
-app.use("/api/carts", cartRoute);
-app.use("/api/orders", orderRoute);
-app.use("/api/checkout", stripeRoute);
-app.use("/api/discount", discountRoute);
+app.use("/api/auth", auth);
+app.use("/api/users", users);
+app.use("/api/products", product);
+app.use("/api/carts", cart);
+app.use("/api/orders", order);
+app.use("/api/checkout", stripe);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Backend server is running!");

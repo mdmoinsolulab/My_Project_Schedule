@@ -1,9 +1,10 @@
 
-const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
 dotenv.config();
+import sendResponse from './responseSender.js';
 
-function emailSender(email) {
+const emailSender = (email) => {
 var smtpConfig = {
     host: 'smtp.gmail.com',
     port: 465,
@@ -25,11 +26,11 @@ var smtpConfig = {
   
   transporter.sendMail(mailOptions, function(err, info) {
     if (err) {
-        res.json("Email Not Sent Please Check Your Email Later");
+      sendResponse(res, 0, "Email Not Sent Please Check Your Email Later");
     } else {
-        res.status(200).json('Email sent to: ' + email, stripeRes);
+      sendResponse(res, 200, 'Email sent to: ' + email, stripeRes);
     }
   });
 }
 
-module.exports = { emailSender };
+export default emailSender;

@@ -1,16 +1,16 @@
-const { sendResponse } = require('./responseSender');
-const {Enum} = require('./enumtypes');
+import sendResponse from './responseSender.js';
+import Enum from './enumtypes.js';
 let isFailed = false;
 
-function Validate(type){
+const Validate = (type) => {
   return function (req,res,next) {
-    console.log("Came here for validation")
-    console.log("req body : ",req.body)
 
-    if (type === Enum.LOGIN) {
+    if (type === Enum.LOGIN || type === Enum.UNAMEPASS) {
+        console.log("came here for login");
         checkForLogin(req, res);
     }
     if (type === Enum.REGISTERATION) {
+        console.log("came here for registeration");
         checkForRegisteration(req, res)
     }
     if (type === Enum.UPDATEUSER) {
@@ -28,7 +28,7 @@ function Validate(type){
   }   
 }
 
-function checkForLogin(req, res) {
+const checkForLogin = (req, res) => {
     const { username, password } = req.body;
     if (username && username.length < 3) {
     isFailed = true;
@@ -38,24 +38,22 @@ function checkForLogin(req, res) {
     isFailed = true;
     sendResponse(res, 401, "Please enter valid password")
     }
+    else {
+        isFailed = false;
+    }
 }
 
-function checkForRegisteration(req, res) {
+const checkForRegisteration = (req, res) => {
     const { email } = req.body;
-    console.log("this is the req object passed : ", req)
     checkForLogin(req, res);
     if (ValidateEmail(email) === false) {
         isFailed = true;
-        console.log("Enter Email regex validation")
         sendResponse(res, 401, "Please enter valid email")
     }
 }
 
-function checkForSomeUserValue(req, res) {
+const checkForSomeUserValue = (req, res) => {
     const { username, password, email, isVendor } = req.body;
-    console.log("TRIggered");
-    console.log("lets see the value : ",username)
-    console.log("lets see the value length : ",username.length)
     isFailed = true;
     if (username && username.length > 3) {
         isFailed = false;
@@ -64,9 +62,7 @@ function checkForSomeUserValue(req, res) {
         isFailed = false;
         }
     else if (ValidateEmail(email) === true) {
-            isFailed = false;
-            console.log("Enter Email regex validation")
-            
+            isFailed = false;            
         }
     else if (isVendor) {
         isFailed = false;
@@ -76,10 +72,8 @@ function checkForSomeUserValue(req, res) {
     }
 }
 
-function checkForProduct (req, res) {
+const checkForProduct = (req, res) => {
     const { title, desc, img, price } = req.body;
-    console.log("Came here for product validation")
-    console.log("req body : ",req.body)
 
     if (title && title.length < 1) {
     isFailed = true;
@@ -99,10 +93,8 @@ function checkForProduct (req, res) {
     }
 }
 
-function checkForSomeProductValue (req, res) {
+const checkForSomeProductValue = (req, res) => {
     const { title, desc, img, price, categories, size, color } = req.body;
-    console.log("Came here for product validation")
-    console.log("req body : ",req.body)
     isFailed = true;
     if (title && title.length > 0) {
     isFailed = false;
@@ -130,8 +122,7 @@ function checkForSomeProductValue (req, res) {
     }
 }
 
-function ValidateEmail(mail) 
-{
+const ValidateEmail = (mail) => {
  if (mail === undefined) {
     return false;
  }
@@ -142,4 +133,4 @@ function ValidateEmail(mail)
     return (false)
 }
 
-module.exports = { Validate };
+export default Validate;

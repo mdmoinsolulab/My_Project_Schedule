@@ -1,5 +1,6 @@
-function sendResponse(res, status, message) {    
-    res.status(status).json(message);
+const sendResponse = (res, status, message) => {    
+      res.status(status).json(message);
 }
 
-module.exports = { sendResponse };
+export default sendResponse;
+//module.exports = { sendResponse };
