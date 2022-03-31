@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Enum from "../helpers/enumtypes.js";
+import Enum from "../utils/enumtypes.js";
 const OrderSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

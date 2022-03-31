@@ -4,11 +4,12 @@ import { addOrder, updateOrder, updateOrderForAdmin, deleteOrder, deleteOrderFor
 import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin,
-} from './verifyToken.js';
+} from '../utils/verifyToken.js';
+import validate from '../utils/newValidate.js';
 
-router.post('/addOrder',  verifyTokenAndAuthorization, addOrder);
-router.put('/updateOrder/:orderId', verifyTokenAndAuthorization, updateOrder);
-router.put('/admin/updateOrder/:userId/:orderId', verifyTokenAndAuthorization, updateOrderForAdmin);
+router.post('/addOrder', validate, verifyTokenAndAuthorization, addOrder);
+router.put('/updateOrder/:orderId', validate, verifyTokenAndAuthorization, updateOrder);
+router.put('/admin/updateOrder/:userId/:orderId', validate, verifyTokenAndAuthorization, updateOrderForAdmin);
 router.delete('/deleteOrder/:orderId', verifyTokenAndAuthorization, deleteOrder);
 router.delete('/admin/deleteOrder/:userId/:orderId', verifyTokenAndAuthorization, deleteOrderForAdmin);
 router.get('/getOrders', verifyTokenAndAuthorization, getOrders);

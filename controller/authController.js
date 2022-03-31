@@ -2,7 +2,7 @@ import User from "../models/User.js";
 import CryptoJS from "crypto-js";
 import jwt from "jsonwebtoken";
 import sendResponse from "../helpers/responseSender.js";
-import passwordCompare from "../utils/passwordCompare.js";
+import passwordCompare from "../helpers/passwordCompare.js";
 
 //REGISTER
 const register = async (req, res) => {
@@ -25,6 +25,11 @@ const register = async (req, res) => {
     }
     return sendResponse(res, 201, newUser);
   } catch (err) {
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };

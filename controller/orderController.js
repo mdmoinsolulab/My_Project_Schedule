@@ -2,6 +2,7 @@ import Order from "../models/Order.js";
 import router from "express";
 router.Router();
 import sendResponse from "../helpers/responseSender.js";
+import { validateParams } from "../utils/newValidate.js";
 
 //CREATE ORDER
 const addOrder = async (req, res) => {
@@ -21,6 +22,11 @@ const addOrder = async (req, res) => {
 //UPDATE ORDER
 const updateOrder = async (req, res) => {
   try {
+    const checkResult = validateParams(req.params.orderId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     req.body.userId = req.user.id;
     const updatedOrder = await Order.findOneAndUpdate(
       { _id: { $eq: req.params.orderId }, userId: { $eq: req.user.id } },
@@ -42,6 +48,16 @@ const updateOrder = async (req, res) => {
 const updateOrderForAdmin = async (req, res) => {
   try {
     req.body.userId = req.params.userId;
+    const checkFirstResult = validateParams(req.params.userId);
+    console.log('these are the results : ', checkFirstResult)
+    if (checkFirstResult != true) {
+      return sendResponse(res, 500, checkFirstResult);
+    }
+    const checkSecondResult = validateParams(req.params.orderId);
+    console.log('these are the results : ', checkSecondResult)
+    if (checkSecondResult != true) {
+      return sendResponse(res, 500, checkSecondResult);
+    }
     const updatedOrder = await Order.findOneAndUpdate(
       { _id: { $eq: req.params.orderId }, userId: { $eq: req.params.userId } },
       {
@@ -61,8 +77,13 @@ const updateOrderForAdmin = async (req, res) => {
 //DELETE ORDER
 const deleteOrder = async (req, res) => {
   try {
+    const checkResult = validateParams(req.params.orderId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     const order = await Order.findOneAndDelete({
-      id_: { $eq: req.params.orderId },
+      _id: { $eq: req.params.orderId },
       userId: { $eq: req.user.id },
     });
     if (!order) {
@@ -77,6 +98,16 @@ const deleteOrder = async (req, res) => {
 //DELETE ORDER FOR ADMIN
 const deleteOrderForAdmin = async (req, res) => {
   try {
+    const checkFirstResult = validateParams(req.params.userId);
+    console.log('these are the results : ', checkFirstResult)
+    if (checkFirstResult != true) {
+      return sendResponse(res, 500, checkFirstResult);
+    }
+    const checkSecondResult = validateParams(req.params.orderId);
+    console.log('these are the results : ', checkSecondResult)
+    if (checkSecondResult != true) {
+      return sendResponse(res, 500, checkSecondResult);
+    }
     const order = await Order.findOneAndDelete({
       id_: { $eq: req.params.orderId },
       userId: { $eq: req.params.userId },
@@ -111,7 +142,7 @@ const getOrders = async (req, res) => {
     const orders = await Order.find({ userId: req.user.id })
       .limit(req.headers.limit * 1)
       .skip((req.headers.page - 1) * req.headers.limit);
-    if (!orders) {
+    if (!orders || !orders.length) {
       return sendResponse(res, 400, "No Orders Found");
     }
     return sendResponse(res, 500, orders);
@@ -123,6 +154,11 @@ const getOrders = async (req, res) => {
 //GET USER ORDERS FOR ADMIN
 const getOrdersForAdmin = async (req, res) => {
   try {
+    const checkResult = validateParams(req.params.userId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     if (req.headers.page) {
       if (req.headers.page <= 0) {
         req.headers.page = 1;
@@ -141,7 +177,8 @@ const getOrdersForAdmin = async (req, res) => {
     const orders = await Order.find({ userId: req.params.userId })
       .limit(req.headers.limit * 1)
       .skip((req.headers.page - 1) * req.headers.limit);
-    if (!orders) {
+
+    if (!orders || !orders.length) {
       return sendResponse(res, 400, "No Orders Found");
     }
     return sendResponse(res, 500, orders);
@@ -171,7 +208,7 @@ const getAllOrders = async (req, res) => {
     const orders = await Order.find()
       .limit(req.headers.limit * 1)
       .skip((req.headers.page - 1) * req.headers.limit);
-    if (!orders) {
+    if (!orders || !orders.length) {
       return sendResponse(res, 400, "No Orders Found");
     }
     return sendResponse(res, 200, orders);

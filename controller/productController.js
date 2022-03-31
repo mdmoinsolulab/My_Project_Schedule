@@ -2,6 +2,7 @@ import Product from "../models/Product.js";
 import router from "express";
 router.Router();
 import sendResponse from "../helpers/responseSender.js";
+import { validateParams } from "../utils/newValidate.js";
 
 //CREATE PRODUCT
 const addProduct = async (req, res) => {
@@ -14,6 +15,12 @@ const addProduct = async (req, res) => {
     }
     return sendResponse(res, 200, newProduct);
   } catch (err) {
+    // if (err.name == ' ValidationError') {
+      // Object.values(err.keyValue).forEach(e => {
+      // console.log('this is e - ', e)
+      // sendResponse(res, 500, `${e} already exists`)})
+    //   return
+    // }
     return sendResponse(res, 500, err);
   }
 };
@@ -22,6 +29,12 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     req.body.userId = req.user.id;
+    const checkResult = validateParams(req.params.productId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
+    
     const updatedProduct = await Product.findOneAndUpdate(
       {
         _id: { $eq: req.params.productId },
@@ -33,7 +46,7 @@ const updateProduct = async (req, res) => {
       },
       { new: true }
     );
-    if (!updateProduct) {
+    if (!updatedProduct) {
       return sendResponse(res, 404, "Failed to update the product");
     }
     return sendResponse(res, 200, updatedProduct);
@@ -46,6 +59,16 @@ const updateProduct = async (req, res) => {
 const updateProductForAdmin = async (req, res) => {
   try {
     req.body.userId = req.params.userId;
+    const checkFirstResult = validateParams(req.params.userId);
+    console.log('these are the results : ', checkFirstResult)
+    if (checkFirstResult != true) {
+      return sendResponse(res, 500, checkFirstResult);
+    }
+    const checkSecondResult = validateParams(req.params.productId);
+    console.log('these are the results : ', checkSecondResult)
+    if (checkSecondResult != true) {
+      return sendResponse(res, 500, checkSecondResult);
+    }
     const updatedProduct = await Product.findOneAndUpdate(
       {
         _id: { $eq: req.params.productId },
@@ -70,18 +93,23 @@ const updateProductForAdmin = async (req, res) => {
 const updateDiscount = async (req, res) => {
   try {
     const { discount } = req.body;
-    let product = await Product.find({
+    const checkResult = validateParams(req.params.productId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
+    let product = await Product.findOne({
       _id: { $eq: req.params.productId },
       userId: { $eq: req.user.id },
       isDeleted: { $eq: false },
     });
 
     if (!product) {
-      return sendResponse(res, 404, "Failed to update the product");
+      return sendResponse(res, 404, "Failed to update the Discount");
     }
 
-    product[0].discount = discount;
-    const newCart = new Product(product[0]);
+    product.discount = discount;
+    const newCart = new Product(product);
     await newCart.save();
 
     return sendResponse(res, 201, "Updated Product Discount");
@@ -93,6 +121,11 @@ const updateDiscount = async (req, res) => {
 //DELETE PRODUCT
 const deleteProduct = async (req, res) => {
   try {
+    const checkResult = validateParams(req.params.productId);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     const product = await Product.findOneAndDelete({
       _id: { $eq: req.params.productId },
       userId: { $eq: req.user.id },
@@ -110,6 +143,16 @@ const deleteProduct = async (req, res) => {
 //DELETE PRODUCT FOR ADMIN
 const deleteProductForAdmin = async (req, res) => {
   try {
+    const checkFirstResult = validateParams(req.params.userId);
+    console.log('these are the results : ', checkFirstResult)
+    if (checkFirstResult != true) {
+      return sendResponse(res, 500, checkFirstResult);
+    }
+    const checkSecondResult = validateParams(req.params.productId);
+    console.log('these are the results : ', checkSecondResult)
+    if (checkSecondResult != true) {
+      return sendResponse(res, 500, checkSecondResult);
+    }
     const product = await Product.findOneAndDelete({
       _id: { $eq: req.params.productId },
       userId: { $eq: req.params.userId },
@@ -126,8 +169,12 @@ const deleteProductForAdmin = async (req, res) => {
 
 //GET PRODUCT
 const getProduct = async (req, res) => {
-  if (req.params.productId) {
     try {
+      const checkResult = validateParams(req.params.productId);
+      console.log('these are the results : ', checkResult)
+      if (checkResult != true) {
+        return sendResponse(res, 500, checkResult);
+      }
       const product = await Product.findOne({
         _id: { $eq: req.params.productId },
       });
@@ -141,7 +188,6 @@ const getProduct = async (req, res) => {
     } catch (err) {
       return sendResponse(res, 500, err);
     }
-  }
 };
 
 //GET ALL PRODUCTS

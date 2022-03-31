@@ -15,14 +15,6 @@ const UserSchema = new mongoose.Schema(
         default: false,
       }      
     },
-    // isVendor: {
-    //   type: Boolean,
-    //   default: false,
-    // },
-    // isAdmin: {
-    //   type: Boolean,
-    //   default: false,
-    // },
     isDeleted: {
       type: Boolean,
       default: false,

@@ -3,6 +3,7 @@ import router from "express";
 router.Router();
 import CryptoJS from "crypto-js";
 import sendResponse from "../helpers/responseSender.js";
+import { validateParams } from "../utils/newValidate.js";
 
 //UPDATE
 const updateUser = async (req, res) => {
@@ -14,11 +15,12 @@ const updateUser = async (req, res) => {
         process.env.PASS_SEC
       ).toString();
     }
-
+    //const {validationCode, ...others} = req.body;
     const updatedUser = await User.findOneAndUpdate(
       { _id: { $eq: id }, isDeleted: { $eq: false } },
       {
-        $set: req.body,
+         $set: req.body,
+        //$set: others,
       },
       { new: true }
     );
@@ -28,14 +30,26 @@ const updateUser = async (req, res) => {
     }
     return sendResponse(res, 200, "Successfully Updated The User");
   } catch (err) {
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };
 
 //UPDATE FOR ADMIN
-const updateUserForAdmin = async (req, res) => {
+const updateUserForAdmin = async (req, res, next) => {
   try {
     let id = req.params.userId;
+    
+    const checkResult = validateParams(id);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
+
     if (req.body.password) {
       req.body.password = CryptoJS.AES.encrypt(
         req.body.password,
@@ -86,6 +100,11 @@ const deleteUser = async (req, res) => {
 const deleteUserForAdmin = async (req, res) => {
   try {
     let id = req.params.userId;
+    const checkResult = validateParams(id);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     const user = await User.findByIdAndUpdate(
       id,
       {
@@ -115,7 +134,7 @@ const getUser = async (req, res) => {
     });
 
     if (!user) {
-      return sendResponse(res, 401, "Failed To Get The User");
+      return sendResponse(res, 401, "User Not Found");
     }
 
     const { password, ...others } = user._doc;
@@ -129,9 +148,15 @@ const getUser = async (req, res) => {
 const getUserForAdmin = async (req, res) => {
   try {
     const id = req.params.userId;
+    const checkResult = validateParams(id);
+    console.log('these are the results : ', checkResult)
+    if (checkResult != true) {
+      return sendResponse(res, 500, checkResult);
+    }
     const user = await User.findOne({
       _id: { $eq: id },
       isDeleted: { $eq: false },
+      'roles.isAdmin': {$eq: false}
     });
 
     if (!user) {
@@ -168,7 +193,7 @@ const getAllUsers = async (req, res) => {
     // const users = query  recent
     //   ? await User.find({ isDeleted: {$eq: false} }).sort({ _id: -1 }).limit(5)
     //   : await User.find({ isDeleted: {$eq: false} });
-    const users = await User.find({ isDeleted: { $eq: false } })
+    const users = await User.find({ isDeleted: { $eq: false }, 'roles.isAdmin': {$eq: false} })
       .sort({ _id: -1 })
       .limit(req.headers.limit * 1)
       .skip((req.headers.page - 1) * req.headers.limit);

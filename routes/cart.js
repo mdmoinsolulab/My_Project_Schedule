@@ -4,10 +4,11 @@ import { addCart, updateCart, deleteCart, deleteCartItem, getUserCart, getUserCa
 import {
   verifyTokenAndAuthorization,
   verifyTokenAndAdmin,
-} from './verifyToken.js';
+} from '../utils/verifyToken.js';
+import validate from '../utils/newValidate.js';
 
-router.post('/addCart',  verifyTokenAndAuthorization, addCart);
-router.put('/updateCart', verifyTokenAndAuthorization, updateCart);
+router.post('/addCart', validate, verifyTokenAndAuthorization, addCart);
+router.put('/updateCart', validate, verifyTokenAndAuthorization, updateCart);
 router.delete('/deleteCart', verifyTokenAndAuthorization, deleteCart);
 router.delete('/deleteCartItem/:productId', verifyTokenAndAuthorization, deleteCartItem);
 router.get('/getUserCart', verifyTokenAndAuthorization, getUserCart);

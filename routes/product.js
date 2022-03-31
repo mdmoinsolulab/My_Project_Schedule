@@ -10,25 +10,24 @@ import {
   getProduct,
   getAllProducts,
 } from "../controller/productController.js";
-import Validate from "../helpers/validation.js";
-import Enum from "../helpers/enumtypes.js";
-import { verifyTokenAndAdmin, verifyTokenAndVendor } from "./verifyToken.js";
+import validate from '../utils/newValidate.js';
+import { verifyTokenAndAdmin, verifyTokenAndVendor } from "../utils/verifyToken.js";
 
 router.post(
   "/addProduct",
-  Validate(Enum.ADDPRODUCT),
+  validate,
   verifyTokenAndVendor,
   addProduct
 );
 router.put(
   "/updateProduct/:productId",
-  Validate(Enum.UPDATEPRODUCT),
+  validate,
   verifyTokenAndVendor,
   updateProduct
 );
 router.put(
   "/admin/updateProduct/:userId/:productId",
-  Validate(Enum.UPDATEPRODUCT),
+  validate,
   verifyTokenAndAdmin,
   updateProductForAdmin
 );
