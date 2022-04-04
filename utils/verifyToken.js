@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import sendResponse from '../helpers/responseSender.js';
 
 const verifyToken = async (req, res, next) => {
+  console.log('came in verify')
   const authHeader = req.headers.token;
   if (authHeader) {
     const token = authHeader.split(" ")[1];

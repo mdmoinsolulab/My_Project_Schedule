@@ -7,20 +7,32 @@ import { validateParams } from "../utils/newValidate.js";
 //CREATE PRODUCT
 const addProduct = async (req, res) => {
   try {
-    req.body.userId = req.user.id;
-    const newProduct = new Product(req.body);
+    const id = req.user.id;
+    const { title, desc, img, categories, price, color, discount, size } = req.body;
+    const newProduct = new Product(
+      {
+        userId: id,
+        title: title,
+        desc: desc,
+        img: img,
+        categories: categories,
+        size: size,
+        color: color,
+        price: price,
+        discount: discount
+      },
+    );
     await newProduct.save();
     if (!newProduct) {
       return sendResponse(res, 404, "Failed to add the product");
     }
     return sendResponse(res, 200, newProduct);
   } catch (err) {
-    // if (err.name == ' ValidationError') {
-      // Object.values(err.keyValue).forEach(e => {
-      // console.log('this is e - ', e)
-      // sendResponse(res, 500, `${e} already exists`)})
-    //   return
-    // }
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };
@@ -28,8 +40,9 @@ const addProduct = async (req, res) => {
 //UPDATE PRODUCT
 const updateProduct = async (req, res) => {
   try {
-    req.body.userId = req.user.id;
-    const checkResult = validateParams(req.params.productId);
+    const { title, desc, img, categories, price, color, discount, size } = req.body;
+    const { productId } = req.params;
+    const checkResult = validateParams(productId);
     console.log('these are the results : ', checkResult)
     if (checkResult != true) {
       return sendResponse(res, 500, checkResult);
@@ -37,12 +50,22 @@ const updateProduct = async (req, res) => {
     
     const updatedProduct = await Product.findOneAndUpdate(
       {
-        _id: { $eq: req.params.productId },
+        _id: { $eq: productId },
         userId: { $eq: req.user.id },
         isDeleted: { $eq: false },
       },
       {
-        $set: req.body,
+        //$set: req.body,
+        $set: {
+          title: title,
+          desc: desc,
+          img: img,
+          categories: categories,
+          size: size,
+          color: color,
+          price: price,
+          discount: discount
+        },
       },
       { new: true }
     );
@@ -51,6 +74,11 @@ const updateProduct = async (req, res) => {
     }
     return sendResponse(res, 200, updatedProduct);
   } catch (err) {
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };
@@ -58,33 +86,50 @@ const updateProduct = async (req, res) => {
 //UPDATE PRODUCT FOR ADMIN
 const updateProductForAdmin = async (req, res) => {
   try {
-    req.body.userId = req.params.userId;
-    const checkFirstResult = validateParams(req.params.userId);
+    const { title, desc, img, categories, price, color, discount, size } = req.body;
+    const { productId, userId } = req.params;
+    const checkFirstResult = validateParams(userId);
     console.log('these are the results : ', checkFirstResult)
     if (checkFirstResult != true) {
       return sendResponse(res, 500, checkFirstResult);
     }
-    const checkSecondResult = validateParams(req.params.productId);
+    const checkSecondResult = validateParams(productId);
     console.log('these are the results : ', checkSecondResult)
     if (checkSecondResult != true) {
       return sendResponse(res, 500, checkSecondResult);
     }
     const updatedProduct = await Product.findOneAndUpdate(
       {
-        _id: { $eq: req.params.productId },
-        userId: { $eq: req.params.userId },
+        _id: { $eq: productId },
+        userId: { $eq: userId },
         isDeleted: { $eq: false },
       },
       {
-        $set: req.body,
+        //$set: req.body,
+        $set: {
+          title: title,
+          desc: desc,
+          img: img,
+          categories: categories,
+          size: size,
+          color: color,
+          price: price,
+          discount: discount
+        },
       },
       { new: true }
     );
-    if (!updateProduct) {
+    console.log('this is the product we got ', updatedProduct)
+    if (!updatedProduct) {
       return sendResponse(res, 404, "Failed to update the product");
     }
     return sendResponse(res, 200, updatedProduct);
   } catch (err) {
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };
@@ -92,15 +137,17 @@ const updateProductForAdmin = async (req, res) => {
 //UPDATE DISCOUNT
 const updateDiscount = async (req, res) => {
   try {
+    const id = req.user.id;
     const { discount } = req.body;
-    const checkResult = validateParams(req.params.productId);
+    const { productId } = req.params;
+    const checkResult = validateParams(productId);
     console.log('these are the results : ', checkResult)
     if (checkResult != true) {
       return sendResponse(res, 500, checkResult);
     }
     let product = await Product.findOne({
-      _id: { $eq: req.params.productId },
-      userId: { $eq: req.user.id },
+      _id: { $eq: productId },
+      userId: { $eq: id },
       isDeleted: { $eq: false },
     });
 
@@ -121,14 +168,16 @@ const updateDiscount = async (req, res) => {
 //DELETE PRODUCT
 const deleteProduct = async (req, res) => {
   try {
-    const checkResult = validateParams(req.params.productId);
+    const id = req.user.id;
+    const { productId } = req.params;
+    const checkResult = validateParams(productId);
     console.log('these are the results : ', checkResult)
     if (checkResult != true) {
       return sendResponse(res, 500, checkResult);
     }
     const product = await Product.findOneAndDelete({
-      _id: { $eq: req.params.productId },
-      userId: { $eq: req.user.id },
+      _id: { $eq: productId },
+      userId: { $eq: id },
       isDeleted: { $eq: false },
     });
     if (!product) {
@@ -143,19 +192,20 @@ const deleteProduct = async (req, res) => {
 //DELETE PRODUCT FOR ADMIN
 const deleteProductForAdmin = async (req, res) => {
   try {
-    const checkFirstResult = validateParams(req.params.userId);
+    const { productId, userId } = req.params;
+    const checkFirstResult = validateParams(userId);
     console.log('these are the results : ', checkFirstResult)
     if (checkFirstResult != true) {
       return sendResponse(res, 500, checkFirstResult);
     }
-    const checkSecondResult = validateParams(req.params.productId);
+    const checkSecondResult = validateParams(productId);
     console.log('these are the results : ', checkSecondResult)
     if (checkSecondResult != true) {
       return sendResponse(res, 500, checkSecondResult);
     }
     const product = await Product.findOneAndDelete({
-      _id: { $eq: req.params.productId },
-      userId: { $eq: req.params.userId },
+      _id: { $eq: productId },
+      userId: { $eq: userId },
       isDeleted: { $eq: false },
     });
     if (!product) {
@@ -170,13 +220,14 @@ const deleteProductForAdmin = async (req, res) => {
 //GET PRODUCT
 const getProduct = async (req, res) => {
     try {
-      const checkResult = validateParams(req.params.productId);
+      const { productId } = req.params;
+      const checkResult = validateParams(productId);
       console.log('these are the results : ', checkResult)
       if (checkResult != true) {
         return sendResponse(res, 500, checkResult);
       }
       const product = await Product.findOne({
-        _id: { $eq: req.params.productId },
+        _id: { $eq: productId },
       });
       if (!product) {
         return sendResponse(res, 404, "Failed to get the product");
@@ -193,30 +244,35 @@ const getProduct = async (req, res) => {
 //GET ALL PRODUCTS
 const getAllProducts = async (req, res) => {
   try {
-    const qNew = req.query.new;
-    const qCategory = req.query.category;
-    if (req.headers.page) {
-      if (req.headers.page <= 0) {
-        req.headers.page = 1;
-      }
+    // const qNew = req.query.new;
+    // const qCategory = req.query.category;
+    const { category: qCategory, page, new : qNew, limit} = req.query;
+    console.log("this is page and limit : ", page, ' : ', limit);
+    if (page === undefined || limit === undefined || page < 1 || limit < 1) {
+      return sendResponse(res, 404, "Page doesn't exists");
     }
-    if (req.headers.limit) {
-      if (req.headers.limit <= 0) {
-        req.headers.limit = 1;
-      }
-    }
-    if (req.headers.limit) {
-      if (req.headers.limit > 100) {
-        req.headers.limit = 100;
-      }
-    }
+    // if (req.headers.page) {
+    //   if (req.headers.page <= 0) {
+    //     req.headers.page = 1;
+    //   }
+    // }
+    // if (req.headers.limit) {
+    //   if (req.headers.limit <= 0) {
+    //     req.headers.limit = 1;
+    //   }
+    // }
+    // if (req.headers.limit) {
+    //   if (req.headers.limit > 100) {
+    //     req.headers.limit = 100;
+    //   }
+    // }
     let products;
 
     if (qNew) {
       products = await Product.find({ isDeleted: { $eq: false } })
         .sort({ createdAt: -1 })
-        .limit(req.headers.limit * 1)
-        .skip((req.headers.page - 1) * req.headers.limit);
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
     } else if (qCategory) {
       products = await Product.find({
         isDeleted: { $eq: false },
@@ -224,8 +280,8 @@ const getAllProducts = async (req, res) => {
           $in: [qCategory],
         },
       })
-        .limit(req.headers.limit * 1)
-        .skip((req.headers.page - 1) * req.headers.limit);
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
     } else {
       products = await Product.find();
     }

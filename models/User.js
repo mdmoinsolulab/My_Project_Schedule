@@ -20,7 +20,20 @@ const UserSchema = new mongoose.Schema(
       default: false,
     }
   },
-  { timestamps: true }
+  { timestamps: true}
 );
 
-export default mongoose.model("User", UserSchema);
+//const User = mongoose.model("User", UserSchema);
+
+// User.init().
+//   // then(() => U2.create(dup)).
+//   then(() => console.log('called in init')).
+//   catch(error => {
+//     console.log('caught called init ');
+//     console.log('errors', error);
+//   });
+const User = mongoose.model("User", UserSchema);
+//UserSchema.indexes({ username: 1 }, { unique: true });
+//UserSchema.index({username: 1, email: 1}, {unique: true});
+//export default mongoose.model("User", UserSchema);
+export default User;

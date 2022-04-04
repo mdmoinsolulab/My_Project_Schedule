@@ -31,7 +31,7 @@ router.put(
   verifyTokenAndAdmin,
   updateProductForAdmin
 );
-router.put("/updateDiscount/:productId", verifyTokenAndVendor, updateDiscount);
+router.put("/updateDiscount/:productId", validate, verifyTokenAndVendor, updateDiscount);
 router.delete("/deleteProduct/:productId", verifyTokenAndVendor, deleteProduct);
 router.delete(
   "/admin/deleteProduct/:userId/:productId",

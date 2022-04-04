@@ -9,18 +9,24 @@ import { validateParams } from "../utils/newValidate.js";
 const updateUser = async (req, res) => {
   try {
     let id = req.user.id;
-    if (req.body.password) {
-      req.body.password = CryptoJS.AES.encrypt(
-        req.body.password,
+    const {username, email, password} = req.body;
+    if (password) {
+      password = CryptoJS.AES.encrypt(
+        password,
         process.env.PASS_SEC
       ).toString();
     }
-    //const {validationCode, ...others} = req.body;
+    
     const updatedUser = await User.findOneAndUpdate(
       { _id: { $eq: id }, isDeleted: { $eq: false } },
       {
-         $set: req.body,
+         //$set: req.body,
         //$set: others,
+        $set: {
+          username: username,
+          email: email,
+          password: password
+        }
       },
       { new: true }
     );
@@ -43,6 +49,7 @@ const updateUser = async (req, res) => {
 const updateUserForAdmin = async (req, res, next) => {
   try {
     let id = req.params.userId;
+    const {username, email, password} = req.body;
     
     const checkResult = validateParams(id);
     console.log('these are the results : ', checkResult)
@@ -50,17 +57,22 @@ const updateUserForAdmin = async (req, res, next) => {
       return sendResponse(res, 500, checkResult);
     }
 
-    if (req.body.password) {
-      req.body.password = CryptoJS.AES.encrypt(
-        req.body.password,
+    if (password) {
+      password = CryptoJS.AES.encrypt(
+        password,
         process.env.PASS_SEC
       ).toString();
     }
 
     const updatedUser = await User.findOneAndUpdate(
-      { _id: { $eq: id }, isDeleted: { $eq: false } },
+      { _id: { $eq: id }, isDeleted: { $eq: false }, "roles.isAdmin": {$eq: false} },
       {
-        $set: req.body,
+        //$set: req.body,
+        $set: {
+          username: username,
+          email: email,
+          password: password
+        }
       },
       { new: true }
     );
@@ -70,6 +82,11 @@ const updateUserForAdmin = async (req, res, next) => {
     }
     return sendResponse(res, 200, "Successfully Updated The User");
   } catch (err) {
+    if (err.name == 'MongoServerError') {
+      Object.values(err.keyValue).forEach(e => {
+      sendResponse(res, 500, `${e} already exists`)})
+      return
+    }
     return sendResponse(res, 500, err);
   }
 };
@@ -172,31 +189,16 @@ const getUserForAdmin = async (req, res) => {
 //GET ALL USER
 const getAllUsers = async (req, res) => {
   try {
-    if (req.headers.page) {
-      if (req.headers.page <= 0) {
-        req.headers.page = 1;
-      }
-    }
-    if (req.headers.limit) {
-      if (req.headers.limit <= 0) {
-        req.headers.limit = 1;
-      }
-    }
-    if (req.headers.limit) {
-      if (req.headers.limit > 100) {
-        req.headers.limit = 100;
-      }
+    const {page, limit} = req.query;
+    console.log("this is page and limit : ", page, ' : ', limit);
+    if (page === undefined || limit === undefined || page < 1 || limit < 1) {
+      return sendResponse(res, 404, "Page doesn't exists");
     }
 
-
-    // const query = req.query.new;   recent
-    // const users = query  recent
-    //   ? await User.find({ isDeleted: {$eq: false} }).sort({ _id: -1 }).limit(5)
-    //   : await User.find({ isDeleted: {$eq: false} });
     const users = await User.find({ isDeleted: { $eq: false }, 'roles.isAdmin': {$eq: false} })
       .sort({ _id: -1 })
-      .limit(req.headers.limit * 1)
-      .skip((req.headers.page - 1) * req.headers.limit);
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
 
     if (!users) {
       return sendResponse(res, 401, "No User Found");
@@ -211,11 +213,19 @@ const getAllUsers = async (req, res) => {
 //GET USER STATS
 const getUsersStats = async (req, res) => {
   try {
+    const {page, limit} = req.query;
+    console.log("this is page and limit : ", page, ' : ', limit);
+    if (page === undefined || limit === undefined || page < 1 || limit < 1) {
+      
+      return sendResponse(res, 404, "Page doesn't exists");
+      
+    }
+
     const date = new Date();
     const lastYear = new Date(date.setFullYear(date.getFullYear() - 1));
 
     const data = await User.aggregate([
-      { $match: { createdAt: { $gte: lastYear }, isDeleted: { $eq: false } } },
+      { $match: { createdAt: { $gte: lastYear }, isDeleted: { $eq: false }, "roles.isAdmin": {$eq: false} } },
       {
         $project: {
           month: { $month: "$createdAt" },
@@ -227,6 +237,8 @@ const getUsersStats = async (req, res) => {
           total: { $sum: 1 },
         },
       },
+      { $limit : (limit * 1) },
+      { $skip: (page * limit - limit)}
     ]);
     if (!data) {
       return sendResponse(res, 401, "Nothing Found");

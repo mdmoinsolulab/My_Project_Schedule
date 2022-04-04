@@ -7,26 +7,36 @@ import { validateParams } from "../utils/newValidate.js";
 //CREATE CART
 const addCart = async (req, res) => {
   try {
-    req.body.userId = req.user.id;
-    const newCart = new Cart(req.body);
+    const id = req.user.id;
+    const { products } = req.body;
+    const newCart = new Cart(
+      {
+        userId: id,
+        products: products
+      }
+    );
     await newCart.save();
     if (!newCart) {
       return sendResponse(res, 404, "Failed to add the cart");
     }
-    sendResponse(res, 200, newCart);
+    return sendResponse(res, 200, newCart);
   } catch (err) {
-    sendResponse(res, 500, err);
+    return sendResponse(res, 500, err);
   }
 };
 
 //UPDATE
 const updateCart = async (req, res) => {
   try {
-    req.body.userId = req.user.id;
+    const id = req.user.id;
+    const { products } = req.body.products;
     const updatedCart = await Cart.findOneAndUpdate(
-      { userId: { $eq: req.user.id } },
+      { userId: { $eq: id } },
       {
-        $set: req.body,
+        //$set: req.body,
+        $set: {
+          products: products
+        },
       },
       { new: true }
     );
@@ -42,7 +52,8 @@ const updateCart = async (req, res) => {
 //DELETE
 const deleteCart = async (req, res) => {
   try {
-    const cart = await Cart.findOneAndDelete({ userId: { $eq: req.user.id } });
+    const id = req.user.id;
+    const cart = await Cart.findOneAndDelete({ userId: { $eq: id } });
     if (!cart) {
       return sendResponse(res, 404, "No Cart to Delete");
     }
@@ -55,12 +66,14 @@ const deleteCart = async (req, res) => {
 //DELETE PRODUCT ITEM
 const deleteCartItem = async (req, res) => {
   try {
-    const checkResult = validateParams(req.params.productId);
+    const id = req.user.id;
+    const { productId } = req.params;
+    const checkResult = validateParams(productId);
     console.log('these are the results : ', checkResult)
     if (checkResult != true) {
       return sendResponse(res, 500, checkResult);
     }
-    let cart = await Cart.findOne({ userId: { $eq: req.user.id } });
+    let cart = await Cart.findOne({ userId: { $eq: id } });
     if (!cart) {
       return sendResponse(res, 404, "No Cart Found");
     }
@@ -69,7 +82,7 @@ const deleteCartItem = async (req, res) => {
 
     if (cart.products && cart.products.length > 0) {
       for (i = 0; i < cart.products.length; i++) {
-        if (req.params.productId == cart.products[i].productId) {
+        if (productId == cart.products[i].productId) {
           found = true;
           break;
         }
@@ -86,7 +99,6 @@ const deleteCartItem = async (req, res) => {
       } else {
         return sendResponse(res, 404, "Could not find the product to delete");
       }
-      //return sendResponse(res, 200, "Cart has been deleted...");
     } else {
       return sendResponse(res, 404, "No Items to delete");
     }
@@ -98,7 +110,8 @@ const deleteCartItem = async (req, res) => {
 //GET USER CART
 const getUserCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: { $eq: req.user.id } }).
+    const id = req.user.id;
+    const cart = await Cart.findOne({ userId: { $eq: id } }).
                  populate('products.productId');
     // const cart = await Cart.findOne({ userId: { $eq: req.user.id } });
     if (!cart || cart.products.length < 1) {
@@ -114,13 +127,13 @@ const getUserCart = async (req, res) => {
 //GET USER CART FOR ADMIN
 const getUserCartForAdmin = async (req, res) => {
   try {
-    const checkResult = validateParams(req.params.userId);
+    const { userId } = req.params;
+    const checkResult = validateParams(userId);
     console.log('these are the results : ', checkResult)
     if (checkResult != true) {
       return sendResponse(res, 500, checkResult);
     }
-    //const cart = await Cart.findOne({ userId: { $eq: req.params.userId } });
-    const cart = await Cart.findOne({ userId: { $eq: req.params.userId } }).
+    const cart = await Cart.findOne({ userId: { $eq: userId } }).
     populate('products.productId');
     if (!cart || cart.products.length < 1) {
       return sendResponse(res, 404, "User Cart Is Empty");
@@ -134,24 +147,15 @@ const getUserCartForAdmin = async (req, res) => {
 //GET ALL USERS CARTS
 const getAllUsersCarts = async (req, res) => {
   try {
-    if (req.headers.page) {
-      if (req.headers.page <= 0) {
-        req.headers.page = 1;
-      }
+    const {page, limit} = req.query;
+    console.log("this is page and limit : ", page, ' : ', limit);
+    if (page === undefined || limit === undefined ||page < 1 || limit < 1) {
+      return sendResponse(res, 404, "Page doesn't exists");      
     }
-    if (req.headers.limit) {
-      if (req.headers.limit <= 0) {
-        req.headers.limit = 1;
-      }
-    }
-    if (req.headers.limit) {
-      if (req.headers.limit > 100) {
-        req.headers.limit = 100;
-      }
-    }
+
     const carts = await Cart.find()
-      .limit(req.headers.limit * 1)
-      .skip((req.headers.page - 1) * req.headers.limit)
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
       .populate('products.productId');
     if (!carts || !carts.length) {
       return sendResponse(res, 404, "No Cart Available");

@@ -13,11 +13,11 @@ const validate = (req, res, next) => {
   if (validationCode === "register") {
     const { username, email, password } = req.body;
 
-    checkForRequiredAndIsString(username, 'username', 'required', 'isString');
+    validateTwoConditions(username, 'username', 'required', 'isString');
 
-    checkForRequiredAndIsString(email, 'email', 'required', 'isValidEmail')
+    validateTwoConditions(email, 'email', 'required', 'isValidEmail')
 
-    checkForRequiredAndIsString(password, 'password','required', 'isStrongPassword')
+    validateTwoConditions(password, 'password','required', 'isStrongPassword')
 
     if (Object.keys(errorsFound.Errors).length > 0 && errorsFound.constructor === Object){
       return sendResponse(res, 401, errorsFound);
@@ -29,9 +29,9 @@ const validate = (req, res, next) => {
   if (validationCode === "login") {
     const { username, email, password } = req.body;
 
-    checkForRequiredAndIsString(username, 'username', 'required', 'isString');
+    validateTwoConditions(username, 'username', 'required', 'isString');
 
-    checkForRequiredAndIsString(password, 'password', 'required', 'isStrongPassword');
+    validateTwoConditions(password, 'password', 'required', 'isStrongPassword');
 
     if (Object.keys(errorsFound.Errors).length > 0 && errorsFound.constructor === Object){
       return sendResponse(res, 401, errorsFound);
@@ -47,15 +47,15 @@ const validate = (req, res, next) => {
     }
 
     if (username !== undefined) {
-      checkForRequiredAndIsString(username, 'username', 'isEmptyOrNull', 'isString')
+      validateTwoConditions(username, 'username', 'isEmptyOrNull', 'isString')
     }
 
     if (email !== undefined) {
-      checkForRequiredAndIsString(email, 'email', 'isEmptyOrNull', 'isValidEmail')
+      validateTwoConditions(email, 'email', 'isEmptyOrNull', 'isValidEmail')
     }
 
     if (password !== undefined) {
-      checkForRequiredAndIsString(password, 'password', 'isEmptyOrNull', 'isStrongPassword')
+      validateTwoConditions(password, 'password', 'isEmptyOrNull', 'isStrongPassword')
     }
 
     if (Object.keys(errorsFound.Errors).length > 0 && errorsFound.constructor === Object) {
@@ -70,11 +70,11 @@ const validate = (req, res, next) => {
   if (validationCode === "addProduct") {
     const { title, desc, img, categories, price, discount, size } = req.body;
 
-    checkForRequiredAndIsString(title, 'title', 'required', 'isString')
+    validateTwoConditions(title, 'title', 'required', 'isString')
 
-    checkForRequiredAndIsString(desc, 'desc', 'required', 'isString')
+    validateTwoConditions(desc, 'desc', 'required', 'isString')
 
-    checkForRequiredAndIsString(img, 'img', 'required', 'isString');
+    validateTwoConditions(img, 'img', 'required', 'isString');
 
     if (categories != undefined) {
     if (!validationHelper('isEmptyOrNull', categories) && Array.isArray(categories) && categories.length > 0) {
@@ -99,9 +99,9 @@ const validate = (req, res, next) => {
     }
     }
   
-    checkForRequiredAndIsString(price, 'price', 'required', 'isNumber');
+    validateTwoConditions(price, 'price', 'required', 'isNumber');
 
-    checkForRequiredAndIsString(size, 'size', 'required', 'isString', 1);
+    validateTwoConditions(size, 'size', 'required', 'isString', 1);
     
     if ((Object.keys(errorsFound.Errors).length > 0 || Object.keys(errorsFound.Warnings).length > 0) && errorsFound.constructor === Object) {
       return sendResponse(res, 401, errorsFound);
@@ -114,15 +114,15 @@ const validate = (req, res, next) => {
     const { title, desc, img, price, categories, size, color, discount  } = req.body;
 
     if (title !== undefined) {
-      checkForRequiredAndIsString(title, 'title', 'isEmptyOrNull', 'isString');
+      validateTwoConditions(title, 'title', 'isEmptyOrNull', 'isString');
     }
 
     if (desc !== undefined) {
-      checkForRequiredAndIsString(desc, 'desc', 'isEmptyOrNull', 'isString');
+      validateTwoConditions(desc, 'desc', 'isEmptyOrNull', 'isString');
     }
 
     if (img !== undefined) {
-      checkForRequiredAndIsString(img, 'img', 'isEmptyOrNull', 'isString');
+      validateTwoConditions(img, 'img', 'isEmptyOrNull', 'isString');
     }
 
     if (categories != undefined) {
@@ -150,22 +150,47 @@ const validate = (req, res, next) => {
     }
 
     if (price !== undefined) {
-      checkForRequiredAndIsString(price, 'price', 'isEmptyOrNull', 'isNumber');
+      validateTwoConditions(price, 'price', 'isEmptyOrNull', 'isNumber');
     }
 
     if (size !== undefined) {
-      checkForRequiredAndIsString(size, 'size', 'isEmptyOrNull', 'isString');
+      validateTwoConditions(size, 'size', 'isEmptyOrNull', 'isString');
     }
 
     if (color !== undefined) {
-      checkForRequiredAndIsString(color, 'color', 'isEmptyOrNull', 'isString');
+      validateTwoConditions(color, 'color', 'isEmptyOrNull', 'isString');
     }
 
     if ((Object.keys(errorsFound.Errors).length > 0 || Object.keys(errorsFound.Warnings).length > 0) && errorsFound.constructor === Object) {
       return sendResponse(res, 401, errorsFound);
     }
 
-    next();
+    return next();
+  }
+
+  if (validationCode === "updateDiscount") {
+    const { discount  } = req.body;
+
+    if (discount != undefined) {
+      if (!validationHelper('isEmptyOrNull', discount) && Array.isArray(discount) && discount.length > 0) {
+        discount.forEach(innerEle => {
+          if (validationHelper('isNumber', innerEle)) {
+            //console.log('how many iterations')
+            errorsFound.Errors.push({'discount': Enum.INVALID_DATA});
+          }
+        })
+      } else {
+        errorsFound.Errors.push({'discount': returnUndefined("element")});
+      }
+      } else {
+        errorsFound.Errors.push({'discount': returnUndefined("element")});
+      }
+      //console.log('got continued');
+      if ((Object.keys(errorsFound.Errors).length > 0 || Object.keys(errorsFound.Warnings).length > 0) && errorsFound.constructor === Object) {
+        return sendResponse(res, 401, errorsFound);
+      }
+
+      return next();
   }
 
   if (validationCode === "addCart" || validationCode === "updateCart") {
@@ -181,7 +206,7 @@ const validate = (req, res, next) => {
           for (let j=0; j<2; j++) {
             if (products[i][`${checkProperties[j]}`] != undefined) {
               const methods = checkPropertiesValues[j].split(" ");
-              if (!checkForRequiredAndIsString(products[i][`${checkProperties[j]}`], `Inside product on position ${i+1} Array's ${j+1} Property ${checkProperties[j]}`, methods[0], methods[1])) {
+              if (!validateTwoConditions(products[i][`${checkProperties[j]}`], `Inside product on position ${i+1} Array's ${j+1} Property ${checkProperties[j]}`, methods[0], methods[1])) {
                 checkIfFailed = true;
                 break;
               }
@@ -219,7 +244,7 @@ const validate = (req, res, next) => {
           for (let j=0; j<3; j++) {
             if (products[i][`${checkProperties[j]}`] != undefined) {
               const methods = checkPropertiesValues[j].split(" ");
-              if (!checkForRequiredAndIsString(products[i][`${checkProperties[j]}`], `Inside product on position ${i+1} Array's ${j+1} Property ${checkProperties[j]}`, methods[0], methods[1])) {
+              if (!validateTwoConditions(products[i][`${checkProperties[j]}`], `Inside product on position ${i+1} Array's ${j+1} Property ${checkProperties[j]}`, methods[0], methods[1])) {
                 checkIfFailed = true;
                 return sendResponse(res, 401, errorsFound);
               }
@@ -240,7 +265,7 @@ const validate = (req, res, next) => {
     return next();
   }
 
-    function checkForRequiredAndIsString(element, elementString, firstValidation, secondValidation, warning = 0) {
+    function validateTwoConditions(element, elementString, firstValidation, secondValidation, warning = 0) {
         let errorsPlacer;
         if (warning) {
           errorsPlacer = errorsFound.Warnings;
